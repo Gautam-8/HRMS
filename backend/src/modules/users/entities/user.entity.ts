@@ -1,5 +1,6 @@
-import { Entity, PrimaryGeneratedColumn, Column, ManyToOne, CreateDateColumn, UpdateDateColumn } from 'typeorm';
+import { Entity, PrimaryGeneratedColumn, Column, ManyToOne, OneToMany, CreateDateColumn, UpdateDateColumn } from 'typeorm';
 import { Organization } from '../../organization/entities/organization.entity';
+import { Department } from '../../departments/entities/department.entity';
 
 @Entity('users')
 export class User {
@@ -18,8 +19,11 @@ export class User {
   @Column()
   phone: string;
 
-  @Column()
+  @Column({ nullable: true })
   designation: string;
+
+  @ManyToOne(() => Department, department => department.employees, { nullable: true })
+  department: Department;
 
   @Column({
     type: 'enum',
@@ -27,6 +31,15 @@ export class User {
     default: 'HR'
   })
   role: string;
+
+  @ManyToOne(() => User, { nullable: true })
+  reportingManager: User;
+
+  @OneToMany(() => User, user => user.reportingManager)
+  directReports: User[];
+
+  @OneToMany(() => Department, department => department.departmentHead)
+  departmentsManaged: Department[];
 
   @ManyToOne(() => Organization, organization => organization.users)
   organization: Organization;
@@ -36,4 +49,7 @@ export class User {
 
   @UpdateDateColumn()
   updatedAt: Date;
+
+  @Column({ nullable: true })
+  isOnboarded: boolean;
 } 

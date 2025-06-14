@@ -29,7 +29,7 @@ function StatsCard({
   );
 }
 
-export default function HRDashboard() {
+export default function DashboardPage() {
   return (
     <DashboardLayout>
       <div className="space-y-6">

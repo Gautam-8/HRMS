@@ -1,19 +1,23 @@
 'use client';
 
+import { useState } from 'react';
 import { DashboardLayout } from '@/components/layout/DashboardLayout';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { UserPlus } from 'lucide-react';
+import { OnboardEmployeeModal } from '@/components/modals/OnboardEmployeeModal';
 
 export default function EmployeesPage() {
+  const [isOnboardModalOpen, setIsOnboardModalOpen] = useState(false);
+
   return (
     <DashboardLayout>
       <div className="space-y-6">
         <div className="flex items-center justify-between">
           <h2 className="text-3xl font-bold tracking-tight">Employees</h2>
-          <Button>
+          <Button onClick={() => setIsOnboardModalOpen(true)}>
             <UserPlus className="mr-2 h-4 w-4" />
-            Add Employee
+            Onboard Employee
           </Button>
         </div>
 
@@ -70,6 +74,11 @@ export default function EmployeesPage() {
             <p className="text-sm text-muted-foreground">Coming soon...</p>
           </CardContent>
         </Card>
+
+        <OnboardEmployeeModal 
+          isOpen={isOnboardModalOpen} 
+          onClose={() => setIsOnboardModalOpen(false)} 
+        />
       </div>
     </DashboardLayout>
   );

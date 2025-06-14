@@ -3,6 +3,8 @@ import { TypeOrmModule } from '@nestjs/typeorm';
 import { ConfigModule, ConfigService } from '@nestjs/config';
 import { OrganizationModule } from './modules/organization/organization.module';
 import { AuthModule } from './modules/auth/auth.module';
+import { UsersModule } from './modules/users/users.module';
+import { DepartmentsModule } from './modules/departments/departments.module';
 import { configs } from './config';
 import { TypeOrmModuleOptions } from '@nestjs/typeorm';
 
@@ -20,6 +22,8 @@ import { TypeOrmModuleOptions } from '@nestjs/typeorm';
     }),
     OrganizationModule,
     AuthModule,
+    UsersModule,
+    DepartmentsModule,
   ],
 })
 export class AppModule {}

@@ -8,7 +8,7 @@ import { CreateOrganizationModal } from '@/components/organization/CreateOrganiz
 import { Header } from "@/components/layout/Header";
 import { Hero } from "@/components/sections/Hero";
 import { Features } from "@/components/sections/Features";
-import Cookies from 'js-cookie';
+import { getMe } from '@/services/auth.service';
 
 export default function Home() {
   const router = useRouter();
@@ -16,10 +16,16 @@ export default function Home() {
   const [isCreateOrgModalOpen, setIsCreateOrgModalOpen] = useState(false);
 
   useEffect(() => {
-    const token = Cookies.get('token');
-    if (token) {
-      router.push('/dashboard/hr');
-    }
+    const checkAuth = async () => {
+      try {
+        await getMe();
+        router.push('/dashboard');
+      } catch (error) {
+        // Not authenticated, stay on home page
+      }
+    };
+    
+    checkAuth();
   }, [router]);
 
   return (
