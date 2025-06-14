@@ -41,8 +41,8 @@ export function CreateDepartmentModal({
   useEffect(() => {
     async function fetchManagers() {
       try {
-        const response = await userService.getManagers(organizationId);
-        setManagers(response.data);
+        const managers = await userService.getManagers(organizationId);
+        setManagers(managers || []);
       } catch (error) {
         console.error('Failed to fetch managers:', error);
         toast({
@@ -50,13 +50,14 @@ export function CreateDepartmentModal({
           description: 'Failed to load managers',
           variant: 'destructive',
         });
+        setManagers([]);
       }
     }
 
-    if (isOpen) {
+    if (isOpen && organizationId) {
       fetchManagers();
     }
-  }, [isOpen, organizationId]);
+  }, [isOpen, organizationId, toast]);
 
   const getInitials = (name: string) => {
     return name

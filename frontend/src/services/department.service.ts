@@ -1,15 +1,16 @@
 import api from '@/lib/axios';
+import { Organization } from './organization.service';
 import { User } from './user.service';
 
 export interface Department {
   id: string;
   name: string;
   description?: string;
+  organization: Organization;
   departmentHead?: User;
   employees?: User[];
-  employeeCount: number;
-  createdAt: string;
-  updatedAt: string;
+  createdAt: Date;
+  updatedAt: Date;
 }
 
 export interface CreateDepartmentDto {

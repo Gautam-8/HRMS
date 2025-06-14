@@ -8,7 +8,7 @@ import { CreateOrganizationModal } from '@/components/organization/CreateOrganiz
 import { Header } from "@/components/layout/Header";
 import { Hero } from "@/components/sections/Hero";
 import { Features } from "@/components/sections/Features";
-import { getMe } from '@/services/auth.service';
+import { userService } from '@/services/user.service';
 
 export default function Home() {
   const router = useRouter();
@@ -18,7 +18,7 @@ export default function Home() {
   useEffect(() => {
     const checkAuth = async () => {
       try {
-        await getMe();
+        await userService.getMe();
         router.push('/dashboard');
       } catch (error) {
         // Not authenticated, stay on home page

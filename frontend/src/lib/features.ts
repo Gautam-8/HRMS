@@ -1,11 +1,11 @@
-export type Feature = {
+export interface Feature {
   id: string;
   label: string;
   path: string;
   icon: string;
   roles: string[];
-  description?: string;
-};
+  description: string;
+}
 
 export const FEATURES: Feature[] = [
   {
@@ -17,12 +17,12 @@ export const FEATURES: Feature[] = [
     description: 'Overview and quick actions'
   },
   {
-    id: 'employees',
-    label: 'Employees',
-    path: '/dashboard/employees',
+    id: 'team',
+    label: 'Team',
+    path: '/dashboard/team',
     icon: 'Users',
     roles: ['HR', 'Manager'],
-    description: 'Employee management and organization structure'
+    description: 'Team management and organization structure'
   },
   {
     id: 'departments',

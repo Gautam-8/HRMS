@@ -47,7 +47,7 @@ export function DepartmentDetailsModal({ isOpen, onClose, department }: Departme
               </div>
               <div>
                 <h4 className="font-medium text-sm">Total Employees</h4>
-                <p className="text-sm text-muted-foreground">{department.employeeCount}</p>
+                <p className="text-sm text-muted-foreground">{department.employees?.length || 0}</p>
               </div>
             </CardContent>
           </Card>

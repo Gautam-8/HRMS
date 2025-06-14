@@ -1,6 +1,7 @@
 import { Entity, PrimaryGeneratedColumn, Column, ManyToOne, OneToMany, CreateDateColumn, UpdateDateColumn } from 'typeorm';
 import { Organization } from '../../organization/entities/organization.entity';
 import { Department } from '../../departments/entities/department.entity';
+import { Attendance } from '../../attendance/entities/attendance.entity';
 
 @Entity('users')
 export class User {
@@ -32,17 +33,17 @@ export class User {
   })
   role: string;
 
-  @ManyToOne(() => User, { nullable: true })
-  reportingManager: User;
-
-  @OneToMany(() => User, user => user.reportingManager)
-  directReports: User[];
-
   @OneToMany(() => Department, department => department.departmentHead)
   departmentsManaged: Department[];
 
   @ManyToOne(() => Organization, organization => organization.users)
   organization: Organization;
+
+  @OneToMany(() => Attendance, attendance => attendance.user)
+  attendance: Attendance[];
+
+  @OneToMany(() => Attendance, attendance => attendance.approver)
+  approvedAttendance: Attendance[];
 
   @CreateDateColumn()
   createdAt: Date;

@@ -1,4 +1,20 @@
 import api from '@/lib/axios';
+import { User } from './auth.service';
+import { Department } from './department.service';
+
+export interface Organization {
+  id: string;
+  name: string;
+  description?: string;
+  industry: string;
+  legalName: string;
+  panNumber?: string;
+  gstNumber?: string;
+  users?: User[];
+  departments?: Department[];
+  createdAt: Date;
+  updatedAt: Date;
+}
 
 export interface CreateOrganizationData {
   // Organization details

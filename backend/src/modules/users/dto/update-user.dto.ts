@@ -6,8 +6,4 @@ export class UpdateUserDto extends PartialType(CreateUserDto) {
   @IsOptional()
   @IsUUID()
   departmentId?: string;
-
-  @IsOptional()
-  @IsUUID()
-  reportingManagerId?: string;
 } 

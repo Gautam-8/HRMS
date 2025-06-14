@@ -1,12 +1,6 @@
 import api from '@/lib/axios';
 import Cookies from 'js-cookie';
-
-export interface User {
-  id: string;
-  email: string;
-  role: string;
-  organizationId: string;
-}
+import { User } from './user.service';
 
 export interface LoginResponse {
   access_token: string;
@@ -24,12 +18,6 @@ export const login = async (data: LoginRequest): Promise<LoginResponse> => {
   return response.data;
 };
 
-export const logout = async (): Promise<void> => {
-  await api.post('/auth/logout');
+export const logout = () => {
   Cookies.remove('token');
-};
-
-export const getMe = async (): Promise<User> => {
-  const response = await api.get('/auth/me');
-  return response.data;
 };

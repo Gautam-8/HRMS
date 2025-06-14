@@ -27,10 +27,6 @@ export class CreateUserDto {
 
   @IsOptional()
   @IsUUID()
-  reportingManagerId?: string;
-
-  @IsOptional()
-  @IsUUID()
   organizationId?: string;
 
   @IsOptional()

@@ -16,22 +16,11 @@ export class UsersService {
   async create(createUserDto: CreateUserDto) {
     const hashedPassword = await bcrypt.hash(createUserDto.password, 10);
     
-    let reportingManager: User | null = null;
-    if (createUserDto.reportingManagerId) {
-      reportingManager = await this.userRepository.findOne({
-        where: { id: createUserDto.reportingManagerId },
-      });
-      if (!reportingManager) {
-        throw new NotFoundException('Reporting manager not found');
-      }
-    }
-
-    const { reportingManagerId, departmentId, organizationId, ...userData } = createUserDto;
+    const { departmentId, organizationId, ...userData } = createUserDto;
     const user = this.userRepository.create({
       ...userData,
       password: hashedPassword,
       isOnboarded: false,
-      reportingManager: reportingManager || undefined,
       department: departmentId ? { id: departmentId } : undefined,
       organization: organizationId ? { id: organizationId } : undefined,
     });
@@ -41,43 +30,32 @@ export class UsersService {
 
   findAll() {
     return this.userRepository.find({
-      relations: ['organization', 'reportingManager', 'department'],
+      relations: ['organization', 'department'],
     });
   }
 
   findOne(id: string) {
     return this.userRepository.findOne({ 
       where: { id },
-      relations: ['organization', 'reportingManager', 'department'],
+      relations: ['organization', 'department'],
     });
   }
 
   findByEmail(email: string) {
     return this.userRepository.findOne({ 
       where: { email },
-      relations: ['organization', 'reportingManager', 'department'],
+      relations: ['organization', 'department'],
     });
   }
 
   async update(id: string, updateUserDto: UpdateUserDto) {
-    let reportingManager: User | null = null;
-    if (updateUserDto.reportingManagerId) {
-      reportingManager = await this.userRepository.findOne({
-        where: { id: updateUserDto.reportingManagerId },
-      });
-      if (!reportingManager) {
-        throw new NotFoundException('Reporting manager not found');
-      }
-    }
-
-    const { reportingManagerId, departmentId, organizationId, ...updateData } = updateUserDto;
+    const { departmentId, organizationId, ...updateData } = updateUserDto;
     if (updateData.password) {
       updateData.password = await bcrypt.hash(updateData.password, 10);
     }
 
     await this.userRepository.update(id, {
       ...updateData,
-      reportingManager: reportingManager || undefined,
       department: departmentId ? { id: departmentId } : undefined,
       organization: organizationId ? { id: organizationId } : undefined,
     });
