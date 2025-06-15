@@ -9,6 +9,8 @@ import { AttendanceModule } from './modules/attendance/attendance.module';
 import { GoalsModule } from './modules/goals/goals.module';
 import { configs } from './config';
 import { TypeOrmModuleOptions } from '@nestjs/typeorm';
+import { SalaryModule } from './modules/salary/salary.module';
+import { DashboardModule } from './modules/dashboard/dashboard.module';
 
 @Module({
   imports: [
@@ -28,6 +30,8 @@ import { TypeOrmModuleOptions } from '@nestjs/typeorm';
     DepartmentsModule,
     AttendanceModule,
     GoalsModule,
+    SalaryModule,
+    DashboardModule
   ],
 })
 export class AppModule {}

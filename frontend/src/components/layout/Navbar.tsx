@@ -4,10 +4,10 @@ import { useRouter } from 'next/navigation';
 import { Button } from '@/components/ui/button';
 import {
   Bell,
-  Settings,
   LogOut,
   User,
-  ChevronDown
+  ChevronDown,
+  Briefcase
 } from 'lucide-react';
 import {
   DropdownMenu,
@@ -32,20 +32,28 @@ export function Navbar() {
   if (!user) return null;
 
   return (
-    <nav className="border-b">
+    <nav className="border-b bg-white/80 backdrop-blur-md shadow-md">
       <div className="h-16 container flex items-center justify-between">
         <div className="flex items-center gap-6">
-          <h2 className="text-lg font-semibold">HRMS</h2>
+          <div className="flex items-center gap-2">
+            <Briefcase className="h-8 w-8 text-blue-500" /> {/* Professional Icon */}
+          </div>
+          <div className="text-sm text-gray-600">
+            Organization: {user.organization?.name || 'N/A'}
+          </div>
         </div>
 
         <div className="flex items-center gap-4">
-          <Button variant="ghost" size="icon">
+          <div className="text-sm text-gray-600">
+            Welcome, {user.fullName} | Role: {user.role}
+          </div>
+          <Button variant="ghost" size="icon" className="hover:bg-gray-100">
             <Bell className="h-5 w-5" />
           </Button>
 
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
-              <Button variant="ghost" className="flex items-center gap-2">
+              <Button variant="ghost" className="flex items-center gap-2 hover:bg-gray-100">
                 <User className="h-5 w-5" />
                 <span>{user.fullName}</span>
                 <ChevronDown className="h-4 w-4" />
@@ -54,10 +62,6 @@ export function Navbar() {
             <DropdownMenuContent align="end">
               <DropdownMenuLabel>My Account</DropdownMenuLabel>
               <DropdownMenuSeparator />
-              <DropdownMenuItem>
-                <Settings className="mr-2 h-4 w-4" />
-                Settings
-              </DropdownMenuItem>
               <DropdownMenuItem onClick={handleLogout}>
                 <LogOut className="mr-2 h-4 w-4" />
                 Logout

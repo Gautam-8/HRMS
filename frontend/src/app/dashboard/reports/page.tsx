@@ -7,7 +7,6 @@ import { FileText, Download, Filter } from 'lucide-react';
 
 export default function ReportsPage() {
   return (
-    <DashboardLayout>
       <div className="space-y-6">
         <div className="flex items-center justify-between">
           <h2 className="text-3xl font-bold tracking-tight">Reports</h2>
@@ -137,6 +136,5 @@ export default function ReportsPage() {
           </CardContent>
         </Card>
       </div>
-    </DashboardLayout>
   );
 } 

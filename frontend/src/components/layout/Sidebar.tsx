@@ -30,9 +30,9 @@ export function Sidebar({ isOpen, onClose }: SidebarProps) {
     >
       <div className="flex h-16 items-center justify-between border-b px-4">
         <h2 className="text-2xl font-bold">HRMS</h2>
-        <Button variant="ghost" size="icon" onClick={onClose}>
+        {/* <Button variant="ghost" size="icon" onClick={onClose}>
           <Icons.X className="h-6 w-6" />
-        </Button>
+        </Button> */}
       </div>
 
       <nav className="space-y-1 p-4">
