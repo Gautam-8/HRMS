@@ -409,4 +409,21 @@ export class AttendanceService {
     const attendance = await this.findOne(id);
     return this.attendanceRepository.remove(attendance);
   }
+
+  async getAttendanceSummary(date?: string) {
+    const targetDate = date ? new Date(date) : startOfDay(new Date());
+    const records = await this.attendanceRepository.find({ where: { date: targetDate } });
+    let present = 0, absent = 0, leave = 0;
+    for (const rec of records) {
+      if (rec.status === 'PRESENT') present++;
+      else if (rec.status === 'ABSENT') absent++;
+      else if (rec.status && rec.status.startsWith('LEAVE')) leave++;
+    }
+    return {
+      date: targetDate.toISOString().slice(0, 10),
+      present,
+      absent,
+      leave
+    };
+  }
 } 

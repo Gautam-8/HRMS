@@ -45,6 +45,11 @@ export class AttendanceController {
     return this.attendanceService.checkOut(req.user.id);
   }
 
+  @Get('summary')
+  async getAttendanceSummary(@Query('date') date?: string) {
+    return this.attendanceService.getAttendanceSummary(date);
+  }
+
   @Post()
   create(@Body() createAttendanceDto: CreateAttendanceDto) {
     return this.attendanceService.create(createAttendanceDto);
@@ -79,4 +84,6 @@ export class AttendanceController {
   remove(@Param('id') id: string) {
     return this.attendanceService.remove(id);
   }
+
+
 } 

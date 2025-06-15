@@ -71,14 +71,6 @@ export const FEATURES: Feature[] = [
     icon: 'BarChart',
     roles: ['HR', 'Manager'],
     description: 'Analytics and insights'
-  },
-  {
-    id: 'settings',
-    label: 'Settings',
-    path: '/dashboard/settings',
-    icon: 'Settings',
-    roles: ['HR'],
-    description: 'System configuration and preferences'
   }
 ];
 
