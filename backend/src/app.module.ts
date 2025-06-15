@@ -5,6 +5,7 @@ import { OrganizationModule } from './modules/organization/organization.module';
 import { AuthModule } from './modules/auth/auth.module';
 import { UsersModule } from './modules/users/users.module';
 import { DepartmentsModule } from './modules/departments/departments.module';
+import { AttendanceModule } from './modules/attendance/attendance.module';
 import { configs } from './config';
 import { TypeOrmModuleOptions } from '@nestjs/typeorm';
 
@@ -24,6 +25,7 @@ import { TypeOrmModuleOptions } from '@nestjs/typeorm';
     AuthModule,
     UsersModule,
     DepartmentsModule,
+    AttendanceModule,
   ],
 })
 export class AppModule {}

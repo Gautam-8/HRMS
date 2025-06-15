@@ -29,9 +29,15 @@ export class User {
   @Column({
     type: 'enum',
     enum: ['CEO', 'CTO', 'HR', 'Manager', 'Employee'],
-    default: 'HR'
+    default: 'Employee'
   })
   role: string;
+
+  @ManyToOne(() => User, user => user.directReports, { nullable: true })
+  reportingManager: User;
+
+  @OneToMany(() => User, user => user.reportingManager)
+  directReports: User[];
 
   @OneToMany(() => Department, department => department.departmentHead)
   departmentsManaged: Department[];

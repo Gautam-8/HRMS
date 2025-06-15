@@ -21,3 +21,4 @@ export const login = async (data: LoginRequest): Promise<LoginResponse> => {
 export const logout = () => {
   Cookies.remove('token');
 };
+

@@ -1,27 +1,26 @@
-import { Entity, PrimaryGeneratedColumn, Column, ManyToOne, CreateDateColumn, UpdateDateColumn } from 'typeorm';
+import { Entity, PrimaryGeneratedColumn, Column, ManyToOne, CreateDateColumn, UpdateDateColumn, Index, Check } from 'typeorm';
 import { User } from '../../users/entities/user.entity';
 
-export enum AttendanceType {
-  REGULAR = 'regular',
-  LEAVE = 'leave'
+export enum AttendanceStatus {
+  PRESENT = 'PRESENT',
+  ABSENT = 'ABSENT',
+  WEEKEND = 'WEEKEND',
+  HOLIDAY = 'HOLIDAY',
+  LEAVE_PENDING = 'LEAVE_PENDING',
+  LEAVE_APPROVED = 'LEAVE_APPROVED',
+  LEAVE_REJECTED = 'LEAVE_REJECTED',
+  REGULARIZATION_PENDING = 'REGULARIZATION_PENDING'
 }
 
 export enum LeaveType {
-  CASUAL = 'casual',
-  SICK = 'sick',
-  ANNUAL = 'annual',
-  UNPAID = 'unpaid',
-  OTHER = 'other'
-}
-
-export enum AttendanceStatus {
-  PENDING = 'pending',
-  APPROVED = 'approved',
-  REJECTED = 'rejected',
-  CANCELLED = 'cancelled'
+  CASUAL = 'CASUAL',
+  SICK = 'SICK',
+  HALF_DAY = 'HALF_DAY'
 }
 
 @Entity('attendance')
+@Index(['user', 'date'], { unique: true })
+@Check(`"endTime" > "startTime"`)
 export class Attendance {
   @PrimaryGeneratedColumn('uuid')
   id: string;
@@ -29,40 +28,44 @@ export class Attendance {
   @ManyToOne(() => User, user => user.attendance)
   user: User;
 
-  @Column({
-    type: 'enum',
-    enum: AttendanceType
-  })
-  type: AttendanceType;
-
-  @Column({ type: 'timestamp' })
-  startTime: Date;
+  @Column({ type: 'date' })
+  date: Date;
 
   @Column({ type: 'timestamp', nullable: true })
-  endTime: Date;
+  startTime: Date | null;
+
+  @Column({ type: 'timestamp', nullable: true })
+  endTime: Date | null;
+
+  @Column({ type: 'float', nullable: true })
+  duration: number | null;
+
+  @Column({
+    type: 'enum',
+    enum: AttendanceStatus,
+    default: null,
+    nullable: true
+  })
+  status: AttendanceStatus | null;
+
+  @Column({ type: 'text', nullable: true })
+  reason: string | null;
 
   @Column({
     type: 'enum',
     enum: LeaveType,
     nullable: true
   })
-  leaveType: LeaveType;
+  leaveType: LeaveType | null;
 
-  @Column({ nullable: true })
-  reason: string;
-
-  @Column({
-    type: 'enum',
-    enum: AttendanceStatus,
-    default: AttendanceStatus.PENDING
-  })
-  status: AttendanceStatus;
-
-  @Column({ nullable: true })
-  rejectionReason: string;
+  @Column({ type: 'text', nullable: true })
+  rejectionReason: string | null;
 
   @ManyToOne(() => User, { nullable: true })
-  approver: User;
+  approver: User | null;
+
+  @Column({ type: 'boolean', default: false })
+  isHalfDay: boolean;
 
   @CreateDateColumn()
   createdAt: Date;
