@@ -71,5 +71,10 @@ export const userService = {
 
   delete: async (id: string): Promise<void> => {
     await axios.delete(`/users/${id}`);
+  },
+
+  getTeamMembers: async (): Promise<User[]> => {
+    const response = await axios.get('/users/team');
+    return response.data;
   }
 }; 

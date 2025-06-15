@@ -6,6 +6,7 @@ import { AuthModule } from './modules/auth/auth.module';
 import { UsersModule } from './modules/users/users.module';
 import { DepartmentsModule } from './modules/departments/departments.module';
 import { AttendanceModule } from './modules/attendance/attendance.module';
+import { GoalsModule } from './modules/goals/goals.module';
 import { configs } from './config';
 import { TypeOrmModuleOptions } from '@nestjs/typeorm';
 
@@ -26,6 +27,7 @@ import { TypeOrmModuleOptions } from '@nestjs/typeorm';
     UsersModule,
     DepartmentsModule,
     AttendanceModule,
+    GoalsModule,
   ],
 })
 export class AppModule {}

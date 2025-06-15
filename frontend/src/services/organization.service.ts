@@ -1,6 +1,6 @@
 import api from '@/lib/axios';
-import { User } from './auth.service';
 import { Department } from './department.service';
+import { User } from './user.service';
 
 export interface Organization {
   id: string;

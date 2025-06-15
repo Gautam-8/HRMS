@@ -89,4 +89,52 @@ export class UsersService {
       relations: ['organization'],
     });
   }
+
+  async isManagerOf(managerId: string, employeeId: string): Promise<boolean> {
+    const employee = await this.userRepository.findOne({
+      where: { id: employeeId },
+      relations: ['department', 'department.departmentHead']
+    });
+
+    if (!employee) {
+      return false;
+    }
+
+    // Check if the manager is the department head
+    if (employee.department?.departmentHead?.id === managerId) {
+      return true;
+    }
+
+    return false;
+  }
+
+  async findTeamMembers(managerId: string) {
+    // First find the manager's department
+    const manager = await this.userRepository.findOne({
+      where: { id: managerId },
+      relations: ['departmentsManaged'],
+    });
+
+    if (!manager) {
+      throw new NotFoundException('Manager not found');
+    }
+
+    // Get all employees in the departments managed by this manager
+    const employees = await this.userRepository
+      .createQueryBuilder('user')
+      .leftJoinAndSelect('user.department', 'department')
+      .where('department.departmentHead = :managerId', { managerId })
+      .select([
+        'user.id',
+        'user.fullName',
+        'user.email',
+        'user.designation',
+        'user.role',
+        'department.id',
+        'department.name',
+      ])
+      .getMany();
+
+    return employees;
+  }
 } 
