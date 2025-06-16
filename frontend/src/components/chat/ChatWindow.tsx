@@ -4,7 +4,6 @@ import { useState, useRef, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { ScrollArea } from '@/components/ui/scroll-area';
-import { Card } from '@/components/ui/card';
 import { Loader2, Send } from 'lucide-react';
 import { useToast } from '@/components/ui/use-toast';
 import { chatService } from '@/services/chat.service';
@@ -74,7 +73,7 @@ export function ChatWindow() {
   };
 
   return (
-    <Card className="flex flex-col h-[600px]">
+    <div className="flex flex-col h-full border rounded-lg">
       <ScrollArea ref={scrollRef} className="flex-1 p-4">
         <div className="space-y-4">
           {messages.map((message) => (
@@ -130,6 +129,6 @@ export function ChatWindow() {
           </Button>
         </div>
       </div>
-    </Card>
+    </div>
   );
 } 

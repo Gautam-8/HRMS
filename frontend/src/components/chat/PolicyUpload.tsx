@@ -2,7 +2,6 @@
 
 import { useState } from 'react';
 import { Button } from '@/components/ui/button';
-import { Card } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Loader2, Upload } from 'lucide-react';
 import { useToast } from '@/components/ui/use-toast';
@@ -71,35 +70,26 @@ export function PolicyUpload() {
   };
 
   return (
-    <Card className="p-4">
-      <div className="space-y-4">
-        <div>
-          <h3 className="text-lg font-medium">Upload Policy Document</h3>
-          <p className="text-sm text-muted-foreground">
-            Upload HR policies and procedures in PDF format (max 5MB)
-          </p>
-        </div>
-
-        <div className="flex items-center gap-4">
-          <Input
-            type="file"
-            accept=".pdf"
-            onChange={handleFileChange}
-            disabled={isUploading}
-          />
-          <Button
-            onClick={handleUpload}
-            disabled={!file || isUploading}
-            size="icon"
-          >
-            {isUploading ? (
-              <Loader2 className="h-4 w-4 animate-spin" />
-            ) : (
-              <Upload className="h-4 w-4" />
-            )}
-          </Button>
-        </div>
-      </div>
-    </Card>
+    <div className="flex items-center gap-2 p-2 bg-muted/50 rounded-lg">
+      <Input
+        type="file"
+        accept=".pdf"
+        onChange={handleFileChange}
+        disabled={isUploading}
+        className="max-w-[200px]"
+      />
+      <Button
+        onClick={handleUpload}
+        disabled={!file || isUploading}
+        size="sm"
+        variant="secondary"
+      >
+        {isUploading ? (
+          <Loader2 className="h-4 w-4 animate-spin" />
+        ) : (
+          <Upload className="h-4 w-4" />
+        )}
+      </Button>
+    </div>
   );
 } 
