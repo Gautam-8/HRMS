@@ -129,10 +129,10 @@ export default function DashboardPage() {
 
       {/* Stats Cards */}
       <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
-        <StatsCard title="Total Employees" value={String(stats.totalEmployees)} icon={Users} description="Active employees" />
-        <StatsCard title="Today's Attendance" value={String(stats.todayAttendance)} icon={Clock} description={stats.attendanceDescription} />
-        <StatsCard title="Pending Requests" value={String(stats.pendingRequests)} icon={FileCheck} description="Leave/regularization" />
-        <StatsCard title="Onboarding" value={String(onboarding.length || stats.onboarding || 0)} icon={UserPlus} description="Joining this week" />
+        <StatsCard title="Total Employees" value={String(stats?.totalEmployees)} icon={Users} description="Active employees" />
+        <StatsCard title="Today's Attendance" value={String(stats?.todayAttendance)} icon={Clock} description={stats?.attendanceDescription} />
+        <StatsCard title="Pending Requests" value={String(stats?.pendingRequests)} icon={FileCheck} description="Leave/regularization" />
+        <StatsCard title="Onboarding" value={String(onboarding.length || stats?.onboarding || 0)} icon={UserPlus} description="Joining this week" />
       </div>
 
       {/* Department Overview */}

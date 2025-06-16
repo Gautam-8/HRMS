@@ -1,4 +1,4 @@
-import axios from './axios';
+import api from '@/lib/axios';
 
 export enum ReviewCycleType {
   QUARTERLY = 'QUARTERLY',
@@ -135,39 +135,39 @@ export interface ReviewCycleAnalytics {
 
 class ReviewsService {
   async createCycle(data: Omit<ReviewCycle, 'id' | 'status' | 'createdAt' | 'updatedAt'>) {
-    const response = await axios.post<ReviewCycle>('/review-cycles', data);
+    const response = await api.post<ReviewCycle>('/review-cycles', data);
     return response.data;
   }
 
   async getAllCycles() {
-    const response = await axios.get<ReviewCycle[]>('/review-cycles');
+    const response = await api.get<ReviewCycle[]>('/review-cycles');
     return response.data;
   }
 
   async getActiveCycles() {
-    const response = await axios.get<ReviewCycle[]>('/review-cycles/active');
+    const response = await api.get<ReviewCycle[]>('/review-cycles/active');
     return response.data;
   }
 
   async getCycle(id: string) {
-    const response = await axios.get<ReviewCycle>(`/review-cycles/${id}`);
+    const response = await api.get<ReviewCycle>(`/review-cycles/${id}`);
     return response.data;
   }
 
   async completeStage(cycleId: string, stage: ReviewStageType) {
-    const response = await axios.post<ReviewCycle>(
+    const response = await api.post<ReviewCycle>(
       `/review-cycles/${cycleId}/stages/${stage}/complete`
     );
     return response.data;
   }
 
   async getCycleAnalytics(id: string) {
-    const response = await axios.get<ReviewCycleAnalytics>(`/review-cycles/${id}/analytics`);
+    const response = await api.get<ReviewCycleAnalytics>(`/review-cycles/${id}/analytics`);
     return response.data;
   }
 
   async startReview(data: { cycleId: string; employeeId: string }) {
-    const response = await axios.post<Review>(`/review-cycles/${data.cycleId}/reviews`, {
+    const response = await api.post<Review>(`/review-cycles/${data.cycleId}/reviews`, {
       employeeId: data.employeeId
     });
     return response.data;

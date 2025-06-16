@@ -11,6 +11,7 @@ import { configs } from './config';
 import { TypeOrmModuleOptions } from '@nestjs/typeorm';
 import { SalaryModule } from './modules/salary/salary.module';
 import { DashboardModule } from './modules/dashboard/dashboard.module';
+import { ChatModule } from './modules/chat/chat.module';
 
 @Module({
   imports: [
@@ -31,7 +32,8 @@ import { DashboardModule } from './modules/dashboard/dashboard.module';
     AttendanceModule,
     GoalsModule,
     SalaryModule,
-    DashboardModule
+    DashboardModule,
+    ChatModule
   ],
 })
 export class AppModule {}

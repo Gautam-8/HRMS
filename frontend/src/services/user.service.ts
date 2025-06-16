@@ -1,4 +1,4 @@
-import axios from '@/lib/axios';
+import api from '@/lib/axios';
 import { Department } from './department.service';
 import { Organization } from './organization.service';
 
@@ -38,43 +38,43 @@ export interface UpdateUserDto extends Partial<CreateUserDto> {
 // Service methods matching backend endpoints
 export const userService = {
   getAll: async (): Promise<User[]> => {
-    const response = await axios.get('/users');
+    const response = await api.get('/users');
     return response.data;
   },
 
   getOne: async (id: string): Promise<User> => {
-    const response = await axios.get(`/users/${id}`);
+    const response = await api.get(`/users/${id}`);
     return response.data;
   },
 
   getMe: async (): Promise<User> => {
-    const response = await axios.get('/users/me');
+    const response = await api.get('/users/me');
     return response.data;
   },
 
   getManagers: async (organizationId: string): Promise<User[]> => {
-    const response = await axios.get('/users/managers', {
+    const response = await api.get('/users/managers', {
       params: { organizationId }
     });
     return response.data;
   },
 
   create: async (data: CreateUserDto): Promise<User> => {
-    const response = await axios.post('/users', data);
+    const response = await api.post('/users', data);
     return response.data;
   },
 
   update: async (id: string, data: UpdateUserDto): Promise<User> => {
-    const response = await axios.patch(`/users/${id}`, data);
+    const response = await api.patch(`/users/${id}`, data);
     return response.data;
   },
 
   delete: async (id: string): Promise<void> => {
-    await axios.delete(`/users/${id}`);
+    await api.delete(`/users/${id}`);
   },
 
   getTeamMembers: async (): Promise<User[]> => {
-    const response = await axios.get('/users/team');
+    const response = await api.get('/users/team');
     return response.data;
   }
 }; 
