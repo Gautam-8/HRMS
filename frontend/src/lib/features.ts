@@ -63,14 +63,6 @@ export const FEATURES: Feature[] = [
     icon: 'FileText',
     roles: ['HR', 'Employee'],
     description: 'Document management and storage'
-  },
-  {
-    id: 'reports',
-    label: 'Reports',
-    path: '/dashboard/reports',
-    icon: 'BarChart',
-    roles: ['HR', 'Manager'],
-    description: 'Analytics and insights'
   }
 ];
 
