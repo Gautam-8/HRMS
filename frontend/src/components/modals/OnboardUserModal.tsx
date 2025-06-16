@@ -33,6 +33,12 @@ import { Button } from '@/components/ui/button';
 import { useToast } from '@/components/ui/use-toast';
 import { userService } from '@/services/user.service';
 import { departmentService } from '@/services/department.service';
+import { GoogleGenerativeAI } from '@google/generative-ai';
+import { Loader2, Upload } from 'lucide-react';
+import { extractTextFromPDF } from '@/lib/pdf';
+
+// Initialize Gemini API
+const genAI = new GoogleGenerativeAI(process.env.NEXT_PUBLIC_GEMINI_API_KEY || '');
 
 const formSchema = z.object({
   fullName: z.string().min(2, 'Name must be at least 2 characters'),
@@ -64,6 +70,7 @@ export function OnboardUserModal({
   organizationId,
 }: OnboardUserModalProps) {
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [isParsing, setIsParsing] = useState(false);
   const { toast } = useToast();
 
   const { data: departments = [] } = useQuery({
@@ -86,7 +93,7 @@ export function OnboardUserModal({
 
   // Reset form when defaultValues change or when modal opens
   useEffect(() => {
-    if (!open) return; // Only reset when modal opens
+    if (!open) return;
 
     if (mode === 'create') {
       form.reset({
@@ -99,11 +106,94 @@ export function OnboardUserModal({
         departmentId: undefined,
       });
     } else if (defaultValues) {
-      // Reset the form with new values, excluding password
       const { password, ...values } = defaultValues;
       form.reset(values);
     }
   }, [form, defaultValues, mode, open]);
+
+  const handleFileUpload = async (event: React.ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0];
+    if (!file) return;
+
+    // Check file type
+    if (!file.type.includes('pdf')) {
+      toast({
+        title: 'Error',
+        description: 'Please upload a PDF document',
+        variant: 'destructive',
+      });
+      return;
+    }
+
+    try {
+      setIsParsing(true);
+      
+      // Extract text from PDF
+      const text = await extractTextFromPDF(file);
+      console.log('Extracted text:', text);
+      
+      // Parse with Gemini
+      const model = genAI.getGenerativeModel({ model: 'gemini-1.5-flash' });
+      const prompt = `Extract the following information from this resume and return ONLY a valid JSON object without any markdown formatting or additional text:
+        {
+          "fullName": "Full name",
+          "email": "Email address",
+          "phone": "Phone number",
+          "designation": "Current or most recent job title",
+          "skills": ["List of skills"]
+        }
+        
+        Resume text:
+        ${text}`;
+
+      const result = await model.generateContent(prompt);
+      const response = await result.response;
+      let parsedData = null;
+
+      if(response.candidates && response.candidates.length && response.candidates[0]?.content 
+        && response.candidates[0]?.content.parts.length && response.candidates[0]?.content.parts[0]?.text) {
+        const responseText = response.candidates[0].content.parts[0].text;
+        // Clean the response text to ensure it's valid JSON
+        const cleanedText = responseText.replace(/```json\n?|\n?```/g, '').trim();
+        try {
+          parsedData = JSON.parse(cleanedText);
+        } catch (parseError) {
+          console.error('JSON Parse Error:', parseError);
+          console.log('Raw response:', responseText);
+          console.log('Cleaned text:', cleanedText);
+        }
+      }
+
+      if(!parsedData) {
+        toast({
+          title: 'Error',
+          description: 'Failed to parse resume. Please fill in the details manually.',
+          variant: 'destructive',
+        });
+        return;
+      }
+
+      // Update form with parsed data
+      form.setValue('fullName', parsedData.fullName || '');
+      form.setValue('email', parsedData.email || '');
+      form.setValue('phone', parsedData.phone || '');
+      form.setValue('designation', parsedData.designation || '');
+
+      toast({
+        title: 'Success',
+        description: 'Resume parsed successfully',
+      });
+    } catch (error) {
+      console.error('Failed to parse resume:', error);
+      toast({
+        title: 'Error',
+        description: 'Failed to parse resume. Please fill in the details manually.',
+        variant: 'destructive',
+      });
+    } finally {
+      setIsParsing(false);
+    }
+  };
 
   async function onSubmit(data: FormData) {
     try {
@@ -111,7 +201,7 @@ export function OnboardUserModal({
       if (mode === 'create') {
         await userService.create({
           ...data,
-          password: data.password!, // Password is required in create mode
+          password: data.password!,
           organizationId,
           isOnboarded: false,
         });
@@ -158,6 +248,26 @@ export function OnboardUserModal({
         </DialogHeader>
         <Form {...form}>
           <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
+            {mode === 'create' && (
+              <div className="flex items-center justify-center w-full">
+                <label className="flex flex-col items-center justify-center w-full h-32 border-2 border-dashed rounded-lg cursor-pointer bg-gray-50 hover:bg-gray-100">
+                  <div className="flex flex-col items-center justify-center pt-5 pb-6">
+                    <Upload className="w-8 h-8 mb-4 text-gray-500" />
+                    <p className="mb-2 text-sm text-gray-500">
+                      <span className="font-semibold">Click to upload</span> or drag and drop
+                    </p>
+                    <p className="text-xs text-gray-500">PDF Document</p>
+                  </div>
+                  <input
+                    type="file"
+                    className="hidden"
+                    accept=".pdf"
+                    onChange={handleFileUpload}
+                    disabled={isParsing}
+                  />
+                </label>
+              </div>
+            )}
             <FormField
               control={form.control}
               name="fullName"
@@ -283,8 +393,13 @@ export function OnboardUserModal({
               )}
             />
             <DialogFooter>
-              <Button type="submit" disabled={isSubmitting}>
-                {isSubmitting ? 'Saving...' : mode === 'create' ? 'Onboard Member' : 'Save Changes'}
+              <Button type="submit" disabled={isSubmitting || isParsing}>
+                {isSubmitting ? 'Saving...' : isParsing ? (
+                  <>
+                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                    Parsing Resume...
+                  </>
+                ) : mode === 'create' ? 'Onboard Member' : 'Save Changes'}
               </Button>
             </DialogFooter>
           </form>
