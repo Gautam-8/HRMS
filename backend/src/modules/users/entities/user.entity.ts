@@ -2,6 +2,7 @@ import { Entity, PrimaryGeneratedColumn, Column, ManyToOne, OneToMany, CreateDat
 import { Organization } from '../../organization/entities/organization.entity';
 import { Department } from '../../departments/entities/department.entity';
 import { Attendance } from '../../attendance/entities/attendance.entity';
+import { UserDocument } from './user_document.entity';
 
 @Entity('users')
 export class User {
@@ -50,6 +51,9 @@ export class User {
 
   @OneToMany(() => Attendance, attendance => attendance.approver)
   approvedAttendance: Attendance[];
+
+  @OneToMany(() => UserDocument, document => document.user)
+  documents: UserDocument[];
 
   @CreateDateColumn()
   createdAt: Date;
