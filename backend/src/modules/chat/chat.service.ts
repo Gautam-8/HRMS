@@ -4,9 +4,7 @@ import { Repository, LessThan } from 'typeorm';
 import { Document } from './entities/document.entity';
 import { Conversation } from './entities/conversation.entity';
 import { Message } from './entities/message.entity';
-import { CreateDocumentDto } from './dto/create-document.dto';
-import { CreateMessageDto } from './dto/create-message.dto';
-import { LangchainService } from './services/langchain.service';
+import { AIService } from './services/ai.service';
 import * as pdfParse from 'pdf-parse';
 
 @Injectable()
@@ -22,7 +20,7 @@ export class ChatService {
         private conversationRepository: Repository<Conversation>,
         @InjectRepository(Message)
         private messageRepository: Repository<Message>,
-        private langchainService: LangchainService
+        private aiService: AIService
     ) {
         // Start conversation cleanup job
         this.startCleanupJob();
@@ -62,15 +60,18 @@ export class ChatService {
             const data = await pdfParse(file);
             const content = data.text;
 
-            // Process document with LangChain
-            const documents = await this.langchainService.processDocument(content);
+            // Process document with AI Service
+            const documents = await this.aiService.processDocument(content, {
+                title: 'HR Policy',
+                organizationId
+            });
 
             // Generate embeddings and save documents
             for (const doc of documents) {
-                const embedding = await this.langchainService.generateEmbedding(doc.pageContent);
+                const embedding = await this.aiService.generateEmbedding(doc.pageContent);
                 
                 await this.documentRepository.save({
-                    title: doc.metadata.source,
+                    title: doc.metadata.title,
                     content: doc.pageContent,
                     embedding,
                     organizationId
@@ -119,21 +120,30 @@ export class ChatService {
                 return "I don't have any policies to reference. Please upload some HR policies first.";
             }
 
-            // Find relevant documents using LangChain
-            const relevantDocs = await this.langchainService.findSimilarDocuments(
+            // Find relevant documents using AI Service
+            const relevantDocs = await this.aiService.findSimilarDocuments(
                 query,
                 documents.map(doc => ({
-                    pageContent: doc.content,
+                    content: doc.content,
                     metadata: { title: doc.title }
                 }))
             );
 
-            // Generate response using LangChain
+            // Generate response using AI Service
             const context = relevantDocs
-                .map(doc => `Title: ${doc.metadata.title}\nContent: ${doc.pageContent}`)
+                .map(doc => `Title: ${doc.metadata.title}\nContent: ${doc.content}`)
                 .join('\n\n');
 
-            const response = await this.langchainService.generateResponse(query, context);
+            const response = await this.aiService.generateResponse(query, context, {
+                systemPrompt: 'You are an HR assistant. Use these policies to answer:',
+                instructions: [
+                    'Answer based on the provided HR policies',
+                    'Be concise and clear',
+                    'If the answer is not in the policies, say so',
+                    'Format response in markdown',
+                    'Include relevant policy references when possible'
+                ]
+            });
 
             // Save assistant message
             await this.messageRepository.save({

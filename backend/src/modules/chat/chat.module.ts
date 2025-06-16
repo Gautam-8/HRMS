@@ -5,7 +5,7 @@ import { ChatController } from './chat.controller';
 import { Document } from './entities/document.entity';
 import { Conversation } from './entities/conversation.entity';
 import { Message } from './entities/message.entity';
-import { LangchainService } from './services/langchain.service';
+import { AIService } from './services/ai.service';
 import { ConfigModule } from '@nestjs/config';
 
 @Module({
@@ -14,7 +14,7 @@ import { ConfigModule } from '@nestjs/config';
         TypeOrmModule.forFeature([Document, Conversation, Message])
     ],
     controllers: [ChatController],
-    providers: [ChatService, LangchainService],
-    exports: [ChatService]
+    providers: [ChatService, AIService],
+    exports: [ChatService, AIService]
 })
 export class ChatModule {} 

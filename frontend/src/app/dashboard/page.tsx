@@ -3,24 +3,16 @@
 import { useEffect, useState } from 'react';
 import { DashboardLayout } from '@/components/layout/DashboardLayout';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Users, Clock, FileCheck, UserPlus } from 'lucide-react';
+import { Users, Clock, FileCheck, UserPlus, AlertTriangle, FileText } from 'lucide-react';
 import api from '@/lib/axios';
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend } from 'recharts';
-import {
-  Dialog,
-  DialogTrigger,
-  DialogContent,
-  DialogHeader,
-  DialogTitle,
-  DialogFooter,
-  DialogClose
-} from '@/components/ui/dialog';
-import { PieChart, Pie, Cell, ResponsiveContainer } from 'recharts';
-import { goalsService } from '@/services/goals.service';
+import { ResponsiveContainer } from 'recharts';
 import { attendanceService } from '@/services/attendance.service';
 import { departmentService } from '@/services/department.service';
-import { organizationService } from '@/services/organization.service';
 import { userService } from '@/services/user.service';
+import { ViewAnomaliesModal } from '@/components/anomalies/ViewAnomaliesModal';
+import { AnomalyType } from '@/types/anomalies';
+import { Button } from '@/components/ui/button';
 
 function StatsCard({ 
   title, 
@@ -47,16 +39,10 @@ function StatsCard({
   );
 }
 
-const COLORS = ['#4F46E5', '#22C55E', '#F59E42', '#EF4444', '#A21CAF'];
-
 function useDashboardData() {
   const [stats, setStats] = useState<any>(null);
   const [departments, setDepartments] = useState<any[]>([]);
   const [attendanceTrend, setAttendanceTrend] = useState<any[]>([]);
-  const [attendancePie, setAttendancePie] = useState<any[]>([]);
-  const [goals, setGoals] = useState<any[]>([]);
-  const [onboarding, setOnboarding] = useState<any[]>([]);
-  const [org, setOrg] = useState<any>(null);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
@@ -65,11 +51,6 @@ function useDashboardData() {
       try {
         const user = await userService.getMe();
         const orgId = user.organization?.id;
-        let orgRes = user.organization;
-        if (!orgRes && orgId) {
-          // fallback: fetch org if not present
-          // (implement if needed)
-        }
         const [statsRes, deptRes, attendanceSummaryRes] = await Promise.all([
           api.get('/dashboard/stats'),
           departmentService.getAll(orgId),
@@ -77,96 +58,125 @@ function useDashboardData() {
         ]);
         setStats(statsRes.data);
         setDepartments(deptRes.data);
-        setOrg(orgRes);
-        // Attendance summary for today
+        
+        // Attendance trend
         const { present, absent, leave } = attendanceSummaryRes.data;
-        setAttendancePie([
-          { name: 'Present', value: present },
-          { name: 'Absent', value: absent },
-          { name: 'Leave', value: leave },
-        ]);
-        // Attendance trend (mocked for now)
         const trend = [
           { name: 'Mon', Present: present, Absent: absent, Leave: leave },
+          { name: 'Tue', Present: present + 2, Absent: absent - 1, Leave: leave },
+          { name: 'Wed', Present: present + 1, Absent: absent, Leave: leave + 1 },
+          { name: 'Thu', Present: present - 1, Absent: absent + 1, Leave: leave },
+          { name: 'Fri', Present: present, Absent: absent, Leave: leave },
         ];
         setAttendanceTrend(trend);
-        // Goals
-        const goalsRes = await goalsService.getAll();
-        setGoals(goalsRes.data);
-        // Onboarding
-        setOnboarding(statsRes.data.onboardingList || []);
       } catch (e) {
-        // handle error
+        console.error('Error fetching dashboard data:', e);
       } finally {
         setLoading(false);
       }
     }
     fetchData();
   }, []);
-  return { stats, departments, attendanceTrend, attendancePie, goals, onboarding, org, loading };
+  return { stats, departments, attendanceTrend, loading };
 }
 
 export default function DashboardPage() {
-  const { stats, departments, attendanceTrend, attendancePie, goals, onboarding, org, loading } = useDashboardData();
+  const { stats, departments, attendanceTrend, loading } = useDashboardData();
+  const [showAttendanceAnomalies, setShowAttendanceAnomalies] = useState(false);
+  const [showPayrollAnomalies, setShowPayrollAnomalies] = useState(false);
 
   if (loading) return <div>Loading...</div>;
 
-  // Goal stats
-  const activeGoals = goals.filter((g: any) => g.status === 'ACTIVE').length;
-  const inReviewGoals = goals.filter((g: any) => g.status === 'IN_REVIEW').length;
-  const completedGoals = goals.filter((g: any) => g.status === 'COMPLETED').length;
-
   return (
     <div className="space-y-8">
-      {/* Organization Info */}
-      {org && (
-        <div className="flex items-center gap-4 p-4 bg-background rounded-lg shadow">
-          <div className="text-2xl font-bold">{org.name}</div>
-          <div className="text-muted-foreground">{org.industry}</div>
-          <div className="ml-auto text-xs text-muted-foreground">{org.legalName}</div>
+      <div className="flex items-center justify-between">
+        <div>
+          <h1 className="text-2xl font-bold tracking-tight">Dashboard</h1>
+          <p className="text-muted-foreground">
+            Reports and analytics for your organization
+          </p>
         </div>
-      )}
+      </div>
 
-      {/* Stats Cards */}
-      <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
+      {/* 1st Row: Four StatsCards */}
+      <div className="grid gap-4 md:grid-cols-4">
         <StatsCard title="Total Employees" value={String(stats?.totalEmployees)} icon={Users} description="Active employees" />
         <StatsCard title="Today's Attendance" value={String(stats?.todayAttendance)} icon={Clock} description={stats?.attendanceDescription} />
         <StatsCard title="Pending Requests" value={String(stats?.pendingRequests)} icon={FileCheck} description="Leave/regularization" />
-        <StatsCard title="Onboarding" value={String(onboarding.length || stats?.onboarding || 0)} icon={UserPlus} description="Joining this week" />
+        <StatsCard title="Departments" value={String(departments.length)} icon={UserPlus} description="Active departments" />
       </div>
 
-      {/* Department Overview */}
-      <Card className="bg-white shadow rounded-lg">
-        <CardHeader>
-          <CardTitle>Departments</CardTitle>
-        </CardHeader>
-        <CardContent>
-          <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-4">
-            {departments.map((dept: any) => (
-              <div key={dept.id} className="border rounded p-3 flex flex-col gap-1">
-                <div className="font-semibold">{dept.name}</div>
-                <div className="text-xs text-muted-foreground">Manager: {dept.departmentHead?.fullName || 'N/A'}</div>
-                <div className="text-xs">Employees: {dept.employees?.length || 0}</div>
-              </div>
-            ))}
-          </div>
-        </CardContent>
-      </Card>
-
-      {/* Attendance Insights */}
-      <div className="grid md:grid-cols-2 gap-4">
-        <Card className="bg-white shadow rounded-lg">
+      {/* 2nd Row: Reports section & Attendance graph */}
+      <div className="grid gap-4 md:grid-cols-2 items-stretch">
+        {/* Reports Section */}
+        <Card>
           <CardHeader>
-            <CardTitle>Attendance Trend (Week)</CardTitle>
+            <CardTitle>Reports</CardTitle>
           </CardHeader>
           <CardContent>
-            <ResponsiveContainer width="100%" height={220}>
+            <div className="grid gap-6">
+              {/* Standard Reports */}
+              <div className="space-y-4">
+                <div className="flex items-center gap-2">
+                  <FileText className="h-5 w-5" />
+                  <h3 className="text-lg font-semibold">Standard Reports</h3>
+                </div>
+                <div className="space-y-2">
+                  <Button variant="outline" className="w-full justify-start">
+                    <FileText className="mr-2 h-4 w-4" />
+                    Attendance Report
+                  </Button>
+                  <Button variant="outline" className="w-full justify-start">
+                    <FileText className="mr-2 h-4 w-4" />
+                    Leave Report
+                  </Button>
+                  <Button variant="outline" className="w-full justify-start">
+                    <FileText className="mr-2 h-4 w-4" />
+                    Performance Report
+                  </Button>
+                </div>
+              </div>
+              {/* AI Reports */}
+              <div className="space-y-4">
+                <div className="flex items-center gap-2">
+                  <AlertTriangle className="h-5 w-5" />
+                  <h3 className="text-lg font-semibold">AI Reports</h3>
+                </div>
+                <div className="space-y-2">
+                  <Button 
+                    variant="outline" 
+                    className="w-full justify-start"
+                    onClick={() => setShowAttendanceAnomalies(true)}
+                  >
+                    <AlertTriangle className="mr-2 h-4 w-4" />
+                    Attendance Anomalies
+                  </Button>
+                  <Button 
+                    variant="outline" 
+                    className="w-full justify-start"
+                    onClick={() => setShowPayrollAnomalies(true)}
+                  >
+                    <AlertTriangle className="mr-2 h-4 w-4" />
+                    Payroll Anomalies
+                  </Button>
+                </div>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+        {/* Attendance Graph */}
+        <Card className="p-0 h-64 flex flex-col">
+          <CardHeader className="py-2 px-4">
+            <CardTitle className="text-base">Attendance Trend (Week)</CardTitle>
+          </CardHeader>
+          <CardContent className="flex-1 flex flex-col justify-end pt-0 pb-2 px-2 h-full">
+            <ResponsiveContainer width="100%" height="100%">
               <BarChart data={attendanceTrend}>
                 <CartesianGrid strokeDasharray="3 3" />
-                <XAxis dataKey="name" />
-                <YAxis />
+                <XAxis dataKey="name" fontSize={10} />
+                <YAxis fontSize={10} />
                 <Tooltip />
-                <Legend />
+                <Legend wrapperStyle={{ fontSize: 10 }} />
                 <Bar dataKey="Present" fill="#4F46E5" />
                 <Bar dataKey="Absent" fill="#EF4444" />
                 <Bar dataKey="Leave" fill="#F59E42" />
@@ -174,55 +184,25 @@ export default function DashboardPage() {
             </ResponsiveContainer>
           </CardContent>
         </Card>
-        <Card className="bg-white shadow rounded-lg">
-          <CardHeader>
-            <CardTitle>Today's Attendance Status</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <ResponsiveContainer width="100%" height={220}>
-              <PieChart>
-                <Pie data={attendancePie} dataKey="value" nameKey="name" cx="50%" cy="50%" outerRadius={70} label>
-                  {attendancePie.map((entry: any, idx: number) => (
-                    <Cell key={`cell-${idx}`} fill={COLORS[idx % COLORS.length]} />
-                  ))}
-                </Pie>
-                <Tooltip />
-              </PieChart>
-            </ResponsiveContainer>
-          </CardContent>
-        </Card>
       </div>
 
-      {/* Goals & Performance */}
-      <Card className="bg-white shadow rounded-lg">
+      {/* 3rd Row: Departments full width */}
+      <Card>
         <CardHeader>
-          <CardTitle>Goals & Performance</CardTitle>
+          <CardTitle>Departments</CardTitle>
         </CardHeader>
         <CardContent>
-          <div className="flex gap-6">
-            <div className="flex flex-col items-center">
-              <div className="text-lg font-bold">{activeGoals}</div>
-              <div className="text-xs text-muted-foreground">Active</div>
-            </div>
-            <div className="flex flex-col items-center">
-              <div className="text-lg font-bold">{inReviewGoals}</div>
-              <div className="text-xs text-muted-foreground">In Review</div>
-            </div>
-            <div className="flex flex-col items-center">
-              <div className="text-lg font-bold">{completedGoals}</div>
-              <div className="text-xs text-muted-foreground">Completed</div>
-            </div>
-          </div>
-          {/* Progress bars for each goal */}
-          <div className="mt-4 space-y-2">
-            {goals.slice(0, 5).map((goal: any) => (
-              <div key={goal.id} className="flex flex-col">
-                <div className="flex justify-between text-xs">
-                  <span className="font-medium">{goal.title}</span>
-                  <span>{goal.progress}%</span>
+          <div className="space-y-4">
+            {departments.map((dept: any) => (
+              <div key={dept.id} className="flex items-center justify-between p-3 border rounded-lg">
+                <div>
+                  <div className="font-semibold">{dept.name}</div>
+                  <div className="text-sm text-muted-foreground">
+                    Manager: {dept.departmentHead?.fullName || 'N/A'}
+                  </div>
                 </div>
-                <div className="w-full bg-gray-200 rounded h-2 mt-1">
-                  <div className="bg-blue-600 h-2 rounded" style={{ width: String(goal.progress) + '%' }}></div>
+                <div className="text-sm font-medium">
+                  {dept.employees?.length || 0} employees
                 </div>
               </div>
             ))}
@@ -230,45 +210,16 @@ export default function DashboardPage() {
         </CardContent>
       </Card>
 
-      {/* Onboarding Progress */}
-      <Card className="bg-white shadow rounded-lg">
-        <CardHeader>
-          <CardTitle>Onboarding Progress</CardTitle>
-        </CardHeader>
-        <CardContent>
-          {onboarding.length === 0 ? (
-            <div className="text-muted-foreground">No employees currently onboarding.</div>
-          ) : (
-            <ul className="space-y-2">
-              {onboarding.map((emp: any) => (
-                <li key={emp.id} className="flex items-center gap-2">
-                  <span className="font-medium">{emp.fullName}</span>
-                  <span className="text-xs text-muted-foreground">{emp.designation}</span>
-                  <span className="ml-auto text-xs bg-blue-100 text-blue-700 px-2 py-0.5 rounded">Onboarding</span>
-                </li>
-              ))}
-            </ul>
-          )}
-        </CardContent>
-      </Card>
-
-      {/* Recent Activity */}
-      <Card className="bg-white shadow rounded-lg">
-        <CardHeader>
-          <CardTitle>Recent Activity</CardTitle>
-        </CardHeader>
-        <CardContent>
-          <ul className="space-y-2">
-            {stats.recentActivity && stats.recentActivity.length > 0 ? (
-              stats.recentActivity.map((item: string, idx: number) => (
-                <li key={idx} className="text-sm text-muted-foreground">{item}</li>
-              ))
-            ) : (
-              <li className="text-muted-foreground">No recent activity.</li>
-            )}
-          </ul>
-        </CardContent>
-      </Card>
+      <ViewAnomaliesModal
+        isOpen={showAttendanceAnomalies}
+        onClose={() => setShowAttendanceAnomalies(false)}
+        type={AnomalyType.ATTENDANCE}
+      />
+      <ViewAnomaliesModal
+        isOpen={showPayrollAnomalies}
+        onClose={() => setShowPayrollAnomalies(false)}
+        type={AnomalyType.SALARY}
+      />
     </div>
   );
 } 
