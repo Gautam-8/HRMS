@@ -126,23 +126,43 @@ export default function AttendancePage() {
   }, [currentMonth]);
 
   const handleCheckIn = async () => {
-    try {
-      setCheckingIn(true);
-      await attendanceService.checkIn();
+    if (!navigator.geolocation) {
       toast({
-        title: 'Success',
-        description: 'Checked in successfully',
-      });
-      fetchAttendanceData();
-    } catch (error: any) {
-      toast({
-        title: 'Error',
-        description: error.response?.data?.message || 'Failed to check in',
+        title: 'Geolocation not supported',
+        description: 'Your browser does not support geolocation.',
         variant: 'destructive',
       });
-    } finally {
-      setCheckingIn(false);
+      return;
     }
+    setCheckingIn(true);
+    navigator.geolocation.getCurrentPosition(
+      async (position) => {
+        try {
+          await attendanceService.checkIn(position.coords.latitude, position.coords.longitude);
+          toast({
+            title: 'Success',
+            description: 'Checked in successfully',
+          });
+          fetchAttendanceData();
+        } catch (error: any) {
+          toast({
+            title: 'Error',
+            description: error.response?.data?.message || 'Failed to check in',
+            variant: 'destructive',
+          });
+        } finally {
+          setCheckingIn(false);
+        }
+      },
+      (error) => {
+        toast({
+          title: 'Location Error',
+          description: 'Unable to retrieve your location. Please allow location access.',
+          variant: 'destructive',
+        });
+        setCheckingIn(false);
+      }
+    );
   };
 
   const handleCheckOut = async () => {

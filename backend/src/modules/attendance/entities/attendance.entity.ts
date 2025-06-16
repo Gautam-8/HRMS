@@ -67,6 +67,12 @@ export class Attendance {
   @Column({ type: 'boolean', default: false })
   isHalfDay: boolean;
 
+  @Column({ type: 'float', nullable: true })
+  latitude: number;
+
+  @Column({ type: 'float', nullable: true })
+  longitude: number;
+
   @CreateDateColumn()
   createdAt: Date;
 

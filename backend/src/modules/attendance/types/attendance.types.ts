@@ -9,4 +9,6 @@ export interface DailyAttendance {
   reason: string | null;
   leaveType: LeaveType | null;
   duration: number | null;
+  latitude: number | null;
+  longitude: number | null;
 } 

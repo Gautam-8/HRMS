@@ -28,4 +28,10 @@ export class CreateAttendanceDto {
   @IsEnum(LeaveType)
   @IsOptional()
   leaveType?: LeaveType;
+
+  @IsOptional()
+  latitude?: number;
+
+  @IsOptional()
+  longitude?: number;
 } 

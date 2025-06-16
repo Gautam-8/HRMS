@@ -56,9 +56,9 @@ export class AttendanceService {
   }
 
   async getMonthlyAttendance(userId: string, month: number, year: number): Promise<DailyAttendance[]> {
-    // Ensure we're working with dates in the correct timezone
-    const startDate = startOfMonth(new Date(Date.UTC(year, month - 1)));
-    const endDate = endOfMonth(new Date(Date.UTC(year, month - 1)));
+    // Create dates in local timezone
+    const startDate = startOfMonth(new Date(year, month - 1));
+    const endDate = endOfMonth(new Date(year, month - 1));
     const today = new Date();
 
     const datesInMonth = eachDayOfInterval({ start: startDate, end: endDate });
@@ -82,9 +82,8 @@ export class AttendanceService {
       const dateStr = format(date, 'yyyy-MM-dd');
       const record = attendanceMap.get(dateStr);
       
-      // Create a UTC date for weekend check to avoid timezone issues
-      const utcDate = new Date(Date.UTC(date.getUTCFullYear(), date.getUTCMonth(), date.getUTCDate()));
-      const isWeekendDay = isWeekend(utcDate);
+      // Use local date for weekend check
+      const isWeekendDay = isWeekend(date);
       const isHolidayDay = this.isHoliday(date);
       const isFutureDate = isAfter(date, today);
 
@@ -104,7 +103,9 @@ export class AttendanceService {
             endTime: null,
             reason: null,
             leaveType: null,
-            duration: null
+            duration: null,
+            latitude: record.latitude,
+            longitude: record.longitude
           };
         }
         return {
@@ -117,7 +118,9 @@ export class AttendanceService {
           leaveType: record.leaveType,
           duration: record.duration || (record.endTime && record.startTime ? 
             differenceInHours(record.endTime, record.startTime) 
-            : null)
+            : null),
+          latitude: record.latitude,
+          longitude: record.longitude
         };
       }
 
@@ -133,7 +136,9 @@ export class AttendanceService {
         endTime: null,
         reason: null,
         leaveType: null,
-        duration: null
+        duration: null,
+        latitude: null,
+        longitude: null
       };
     });
 
@@ -180,7 +185,9 @@ export class AttendanceService {
           leaveType: record.leaveType,
           duration: record.duration || (record.endTime && record.startTime ? 
             differenceInHours(record.endTime, record.startTime) 
-            : null)
+            : null),
+          latitude: record.latitude,
+          longitude: record.longitude
         };
       }
 
@@ -196,14 +203,16 @@ export class AttendanceService {
         endTime: null,
         reason: null,
         leaveType: null,
-        duration: null
+        duration: null,
+        latitude: null,
+        longitude: null
       };
     });
 
     return yearlyAttendance;
   }
 
-  async checkIn(userId: string) {
+  async checkIn(userId: string, latitude?: number, longitude?: number) {
     const user = await this.userRepository.findOne({ where: { id: userId } });
     if (!user) {
       throw new NotFoundException('User not found');
@@ -233,7 +242,9 @@ export class AttendanceService {
       date: today,
       startTime: new Date(),
       status: AttendanceStatus.PRESENT,
-      duration: 0
+      duration: 0,
+      latitude,
+      longitude
     });
 
     return this.attendanceRepository.save(attendance);
@@ -290,7 +301,9 @@ export class AttendanceService {
           startTime: null,
           endTime: null,
           status: AttendanceStatus.LEAVE_PENDING,
-          isHalfDay: createAttendanceDto.leaveType === LeaveType.HALF_DAY
+          isHalfDay: createAttendanceDto.leaveType === LeaveType.HALF_DAY,
+          latitude: createAttendanceDto.latitude,
+          longitude: createAttendanceDto.longitude
         });
 
         attendanceRecords.push(attendance);
@@ -310,7 +323,9 @@ export class AttendanceService {
       date: startDate,
       startTime: createAttendanceDto.startTime ? new Date(createAttendanceDto.startTime) : null,
       endTime: createAttendanceDto.endTime ? new Date(createAttendanceDto.endTime) : null,
-      isHalfDay: false
+      isHalfDay: false,
+      latitude: createAttendanceDto.latitude,
+      longitude: createAttendanceDto.longitude
     });
 
     if (attendance.startTime && attendance.endTime) {

@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import {
   Table,
   TableBody,
@@ -12,8 +12,14 @@ import { format } from 'date-fns';
 import { AttendanceStatus } from '@/services/types';
 import { DailyAttendance } from '@/services/attendance.service';
 import { useToast } from '@/components/ui/use-toast';
-import { Pencil, Loader2 } from 'lucide-react';
+import { Pencil, Loader2, MapPin, Info } from 'lucide-react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from '@/components/ui/dialog';
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
+} from "@/components/ui/tooltip";
 
 interface AttendanceTableProps {
   data: DailyAttendance[];
@@ -24,6 +30,8 @@ interface AttendanceTableProps {
 
 export function AttendanceTable({ data, onUpdate, showActions = false, onEdit }: AttendanceTableProps) {
   const [loading, setLoading] = useState<string | null>(null);
+  const [locationNames, setLocationNames] = useState<Record<string, { short: string; full: string }>>({});
+  const [loadingLocations, setLoadingLocations] = useState<Record<string, boolean>>({});
   const [confirmDialog, setConfirmDialog] = useState<{
     open: boolean;
     record: DailyAttendance | null;
@@ -35,6 +43,43 @@ export function AttendanceTable({ data, onUpdate, showActions = false, onEdit }:
   const filteredData = data
     .filter(record => new Date(record.date) <= currentDate)
     .sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime()); // Sort by date descending
+
+  // Function to fetch location name from coordinates using OpenStreetMap
+  const fetchLocationName = async (latitude: number, longitude: number, date: string) => {
+    try {
+      setLoadingLocations(prev => ({ ...prev, [date]: true }));
+      const response = await fetch(
+        `https://nominatim.openstreetmap.org/reverse?format=json&lat=${latitude}&lon=${longitude}&zoom=18&addressdetails=1`
+      );
+      const data = await response.json();
+      
+      if (data.display_name) {
+        // Get first two words of the address
+        const firstTwoWords = data.display_name.split(' ').slice(0, 2).join(' ');
+        setLocationNames(prev => ({ 
+          ...prev, 
+          [date]: {
+            short: firstTwoWords,
+            full: data.display_name
+          }
+        }));
+      }
+    } catch (error) {
+      console.error('Error fetching location:', error);
+      setLocationNames(prev => ({ ...prev, [date]: { short: 'Location unavailable', full: 'Location unavailable' } }));
+    } finally {
+      setLoadingLocations(prev => ({ ...prev, [date]: false }));
+    }
+  };
+
+  // Fetch location names for records with coordinates
+  useEffect(() => {
+    data.forEach(record => {
+      if (record.latitude && record.longitude && !locationNames[record.date]) {
+        fetchLocationName(record.latitude, record.longitude, record.date);
+      }
+    });
+  }, [data]);
 
   const getStatusBadge = (status: AttendanceStatus | null) => {
     if (!status) {
@@ -155,6 +200,7 @@ export function AttendanceTable({ data, onUpdate, showActions = false, onEdit }:
               <TableHead className="text-[13px] font-medium text-[#6B7280] py-3 px-4">Check Out</TableHead>
               <TableHead className="text-[13px] font-medium text-[#6B7280] py-3 px-4">Duration</TableHead>
               <TableHead className="text-[13px] font-medium text-[#6B7280] py-3 px-4">Remarks</TableHead>
+              <TableHead className="text-[13px] font-medium text-[#6B7280] py-3 px-4">Location</TableHead>
               <TableHead className="text-[13px] font-medium text-[#6B7280] py-3 px-4 w-[50px]">Edit</TableHead>
             </TableRow>
           </TableHeader>
@@ -171,6 +217,42 @@ export function AttendanceTable({ data, onUpdate, showActions = false, onEdit }:
                   {record.duration ? `${record.duration}h` : '-'}
                 </TableCell>
                 <TableCell className="text-[13px] text-[#6B7280] py-3 px-4">{record.reason || '-'}</TableCell>
+                <TableCell className="text-[13px] text-[#6B7280] py-3 px-4">
+                  {record.latitude && record.longitude ? (
+                    <div className="flex items-center space-x-2">
+                      {loadingLocations[record.date] ? (
+                        <Loader2 className="h-4 w-4 animate-spin" />
+                      ) : (
+                        <>
+                          <MapPin className="h-4 w-4 text-gray-500" />
+                          <div className="flex items-center space-x-1">
+                            <a 
+                              href={`https://www.openstreetmap.org/?mlat=${record.latitude}&mlon=${record.longitude}`}
+                              target="_blank"
+                              rel="noopener noreferrer"
+                              className="text-blue-600 hover:text-blue-800 hover:underline"
+                              title={`Lat: ${record.latitude}, Lon: ${record.longitude}`}
+                            >
+                              {locationNames[record.date]?.short || 'Loading location...'}
+                            </a>
+                            <TooltipProvider>
+                              <Tooltip>
+                                <TooltipTrigger>
+                                  <Info className="h-4 w-4 text-gray-400 hover:text-gray-600 cursor-help" />
+                                </TooltipTrigger>
+                                <TooltipContent>
+                                  <p className="max-w-[300px] break-words">
+                                    {locationNames[record.date]?.full}
+                                  </p>
+                                </TooltipContent>
+                              </Tooltip>
+                            </TooltipProvider>
+                          </div>
+                        </>
+                      )}
+                    </div>
+                  ) : '-'}
+                </TableCell>
                 <TableCell className="py-3 px-4">
                   <Button 
                     variant="ghost" 

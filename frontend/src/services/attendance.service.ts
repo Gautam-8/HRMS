@@ -52,11 +52,13 @@ export interface DailyAttendance {
   reason: string | null;
   leaveType: LeaveType | null;
   duration: number | null;
+  latitude: number | null;
+  longitude: number | null;
 }
 
 class AttendanceService {
-  async checkIn(): Promise<DailyAttendance> {
-    const response = await axios.post('/attendance/check-in');
+  async checkIn(latitude?: number, longitude?: number): Promise<DailyAttendance> {
+    const response = await axios.post('/attendance/check-in', { latitude, longitude });
     return response.data;
   }
 
