@@ -31,7 +31,7 @@ export function Hero() {
               </p>
               <div className="flex gap-4">
                 <Button size="lg" className="text-lg" onClick={openCreateOrgModal}>
-                  Get Started Free
+                  Get Started
                 </Button>
                 <Button size="lg" variant="outline" className="text-lg">
                   Book a Demo

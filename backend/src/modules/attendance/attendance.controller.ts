@@ -36,8 +36,8 @@ export class AttendanceController {
   }
 
   @Post('check-in')
-  checkIn(@Request() req) {
-    return this.attendanceService.checkIn(req.user.id);
+  checkIn(@Request() req, @Body() body: { latitude: number, longitude: number }) {
+    return this.attendanceService.checkIn(req.user.id, body.latitude, body.longitude);
   }
 
   @Post('check-out')

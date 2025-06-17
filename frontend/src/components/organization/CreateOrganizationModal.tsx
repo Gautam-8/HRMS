@@ -6,6 +6,8 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
 import { toast } from "sonner";
 import { Building2, ChevronRight, User, Loader2, ArrowLeft } from "lucide-react";
+import { login } from '@/services/auth.service';
+import { useRouter } from 'next/navigation';
 
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
@@ -57,8 +59,10 @@ interface CreateOrganizationModalProps {
 }
 
 export function CreateOrganizationModal({ isOpen, onClose }: CreateOrganizationModalProps) {
+  const router = useRouter();
   const [step, setStep] = useState<'organization' | 'hr'>('organization');
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [isLoggingIn, setIsLoggingIn] = useState(false);
 
   const form = useForm<FormData>({
     resolver: zodResolver(formSchema),
@@ -81,6 +85,7 @@ export function CreateOrganizationModal({ isOpen, onClose }: CreateOrganizationM
     setStep('organization');
     form.reset();
     setIsSubmitting(false);
+    setIsLoggingIn(false);
     onClose();
   };
 
@@ -104,12 +109,28 @@ export function CreateOrganizationModal({ isOpen, onClose }: CreateOrganizationM
       setIsSubmitting(true);
       await organizationService.create(data);
       toast.success('Organization created successfully!');
-      handleClose();
+      
+      // Automatically log in the HR user
+      setIsLoggingIn(true);
+      try {
+        const loginResponse = await login({
+          email: data.email,
+          password: data.password
+        });
+        
+        toast.success('Welcome to your new organization!');
+        router.push('/dashboard');
+      } catch (loginError) {
+        console.error('Auto-login failed:', loginError);
+        toast.error('Organization created but auto-login failed. Please log in manually.');
+        handleClose();
+      }
     } catch (error) {
       console.error('Organization creation error:', error);
       toast.error(error instanceof Error ? error.message : 'Failed to create organization');
     } finally {
       setIsSubmitting(false);
+      setIsLoggingIn(false);
     }
   };
 
@@ -317,11 +338,16 @@ export function CreateOrganizationModal({ isOpen, onClose }: CreateOrganizationM
                     <ArrowLeft className="mr-2 w-4 h-4" />
                     Back
                   </Button>
-                  <Button type="submit" disabled={isSubmitting}>
+                  <Button type="submit" disabled={isSubmitting || isLoggingIn}>
                     {isSubmitting ? (
                       <>
                         <Loader2 className="mr-2 h-4 w-4 animate-spin" />
                         Creating...
+                      </>
+                    ) : isLoggingIn ? (
+                      <>
+                        <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                        Logging in...
                       </>
                     ) : (
                       'Create Organization'

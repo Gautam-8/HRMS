@@ -17,20 +17,20 @@ export const FEATURES: Feature[] = [
     description: 'Overview and quick actions'
   },
   {
-    id: 'team',
-    label: 'Team',
-    path: '/dashboard/team',
-    icon: 'Users',
-    roles: ['HR', 'Manager'],
-    description: 'Team management and organization structure'
-  },
-  {
     id: 'departments',
     label: 'Departments',
     path: '/dashboard/departments',
     icon: 'Building',
     roles: ['HR'],
     description: 'Department and team structure'
+  },
+  {
+    id: 'team',
+    label: 'Team',
+    path: '/dashboard/team',
+    icon: 'Users',
+    roles: ['HR'],
+    description: 'Team management and organization structure'
   },
   {
     id: 'attendance',
@@ -45,7 +45,7 @@ export const FEATURES: Feature[] = [
     label: 'Payroll',
     path: '/dashboard/payroll',
     icon: 'DollarSign',
-    roles: ['HR', 'Employee'],
+    roles: ['HR', 'Manager', 'Employee'],
     description: 'Salary and compensation management'
   },
   {
@@ -61,7 +61,7 @@ export const FEATURES: Feature[] = [
     label: 'Documents',
     path: '/dashboard/documents',
     icon: 'FileText',
-    roles: ['HR', 'Employee'],
+    roles: ['HR', 'Manager', 'Employee'],
     description: 'Document management and storage'
   }
 ];

@@ -4,9 +4,12 @@ import { useState } from 'react';
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
 import { LoginModal } from '@/components/modals/LoginModal';
+import { CreateOrganizationModal } from '../organization/CreateOrganizationModal';
 
 export function Header() {
   const [isLoginModalOpen, setIsLoginModalOpen] = useState(false);
+  const [isCreateOrgModalOpen, setIsCreateOrgModalOpen] = useState(false);
+
 
   return (
     <header className="fixed top-0 w-full bg-white/80 backdrop-blur-sm border-b z-50">
@@ -42,6 +45,11 @@ export function Header() {
       <LoginModal 
         isOpen={isLoginModalOpen} 
         onClose={() => setIsLoginModalOpen(false)} 
+      />
+
+      <CreateOrganizationModal
+        isOpen={isCreateOrgModalOpen}
+        onClose={() => setIsCreateOrgModalOpen(false)}
       />
     </header>
   );

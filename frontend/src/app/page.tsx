@@ -12,8 +12,6 @@ import { userService } from '@/services/user.service';
 
 export default function Home() {
   const router = useRouter();
-  const [isLoginModalOpen, setIsLoginModalOpen] = useState(false);
-  const [isCreateOrgModalOpen, setIsCreateOrgModalOpen] = useState(false);
 
   useEffect(() => {
     const checkAuth = async () => {
@@ -33,27 +31,6 @@ export default function Home() {
       <Header />
       <Hero />
       <Features />
-      <div className="flex min-h-screen flex-col items-center justify-center p-24">
-        <h1 className="text-4xl font-bold mb-8">Welcome to HRMS</h1>
-        <div className="flex gap-4">
-          <Button onClick={() => setIsLoginModalOpen(true)}>
-            Login
-          </Button>
-          <Button onClick={() => setIsCreateOrgModalOpen(true)} variant="outline">
-            Get Started
-          </Button>
-        </div>
-      </div>
-
-      <LoginModal 
-        isOpen={isLoginModalOpen} 
-        onClose={() => setIsLoginModalOpen(false)} 
-      />
-      
-      <CreateOrganizationModal
-        isOpen={isCreateOrgModalOpen}
-        onClose={() => setIsCreateOrgModalOpen(false)}
-      />
     </main>
   );
 }

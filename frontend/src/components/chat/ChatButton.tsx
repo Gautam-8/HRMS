@@ -6,9 +6,11 @@ import { Dialog, DialogContent, DialogTitle } from '@/components/ui/dialog';
 import { MessageCircle } from 'lucide-react';
 import { ChatWindow } from './ChatWindow';
 import { PolicyUpload } from './PolicyUpload';
+import { useAuth } from '@/hooks/use-auth';
 
 export function ChatButton() {
   const [isOpen, setIsOpen] = useState(false);
+  const { user } = useAuth();
 
   return (
     <>
@@ -30,7 +32,7 @@ export function ChatButton() {
           </p>
 
           <div className="flex-1 overflow-hidden flex flex-col gap-4">
-            <PolicyUpload />
+            {user?.role === 'HR' && <PolicyUpload />}
             <div className="flex-1 min-h-0">
               <ChatWindow />
             </div>

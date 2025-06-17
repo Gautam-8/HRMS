@@ -20,17 +20,38 @@ export class DashboardService {
   ) {}
 
   async getDashboardStats(userId: string) {
-    const totalEmployees = await this.userRepository.count();
+    const user = await this.userRepository.findOne({
+      where: { id: userId },
+      relations: ['organization']
+    });
+    const organizationId = user?.organization.id;
+    const totalEmployees = await this.userRepository.count({
+      where: { organization: { id: organizationId } }
+    });
+    
     const todayAttendance = await this.attendanceRepository.count({
-      where: { date: new Date() },
+      where: { 
+        date: new Date(),
+        user: { organization: { id: organizationId } }
+      },
     });
+    
     const attendanceDescription = `${todayAttendance} employees present today`;
+    
     const pendingRequests = await this.attendanceRepository.count({
-      where: { status: AttendanceStatus.LEAVE_PENDING },
+      where: { 
+        status: AttendanceStatus.LEAVE_PENDING,
+        user: { organization: { id: organizationId } }
+      },
     });
+    
     const onboarding = await this.userRepository.count({
-      where: { isOnboarded: false },
+      where: { 
+        isOnboarded: false,
+        organization: { id: organizationId }
+      },
     });
+    
     const recentActivity = await this.getRecentActivity(userId);
 
     return {

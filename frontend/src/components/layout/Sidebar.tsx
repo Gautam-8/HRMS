@@ -4,8 +4,9 @@ import { useState } from 'react';
 import { useRouter, usePathname } from 'next/navigation';
 import { Button } from '@/components/ui/button';
 import * as Icons from 'lucide-react';
-import { FEATURES, type Feature } from '@/lib/features';
+import { getAccessibleFeatures } from '@/lib/features';
 import { cn } from '@/lib/utils';
+import { useAuth } from '@/hooks/use-auth';
 
 interface SidebarProps {
   isOpen: boolean;
@@ -15,11 +16,15 @@ interface SidebarProps {
 export function Sidebar({ isOpen, onClose }: SidebarProps) {
   const router = useRouter();
   const pathname = usePathname();
+  const { user } = useAuth();
 
   const IconComponent = (iconName: string) => {
     const Icon = Icons[iconName as keyof typeof Icons] as React.ComponentType<{ className?: string }>;
     return Icon ? <Icon className="h-5 w-5" /> : null;
   };
+
+  // Get features based on user's role
+  const accessibleFeatures = user ? getAccessibleFeatures(user.role) : [];
 
   return (
     <aside 
@@ -36,7 +41,7 @@ export function Sidebar({ isOpen, onClose }: SidebarProps) {
       </div>
 
       <nav className="space-y-1 p-4">
-        {FEATURES.map((feature) => {
+        {accessibleFeatures.map((feature) => {
           const isActive = pathname === feature.path;
           
           return (

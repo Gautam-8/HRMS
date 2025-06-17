@@ -87,15 +87,20 @@ export function OnboardUserModal({
     defaultValues: {
       role: 'Employee',
       phone: '',
-      ...defaultValues,
+      fullName: '',
+      email: '',
+      password: '',
+      designation: '',
+      departmentId: undefined,
     },
   });
 
-  // Reset form when defaultValues change or when modal opens
+  // Reset form when modal state changes
   useEffect(() => {
-    if (!open) return;
-
-    if (mode === 'create') {
+    if (!open) {
+      // Clean up when modal is closed
+      setIsSubmitting(false);
+      setIsParsing(false);
       form.reset({
         role: 'Employee',
         phone: '',
@@ -105,11 +110,79 @@ export function OnboardUserModal({
         designation: '',
         departmentId: undefined,
       });
-    } else if (defaultValues) {
-      const { password, ...values } = defaultValues;
-      form.reset(values);
+    } else {
+      // Initialize form when modal is opened
+      if (mode === 'create') {
+        form.reset({
+          role: 'Employee',
+          phone: '',
+          fullName: '',
+          email: '',
+          password: '',
+          designation: '',
+          departmentId: undefined,
+        });
+      } else if (defaultValues) {
+        const { password, ...values } = defaultValues;
+        form.reset(values);
+      }
     }
-  }, [form, defaultValues, mode, open]);
+  }, [open, mode, defaultValues, form]);
+
+  const handleClose = () => {
+    // Clean up state before closing
+    setIsSubmitting(false);
+    setIsParsing(false);
+    form.reset({
+      role: 'Employee',
+      phone: '',
+      fullName: '',
+      email: '',
+      password: '',
+      designation: '',
+      departmentId: undefined,
+    });
+    onOpenChange(false);
+  };
+
+  const handleSubmit = async (data: FormData) => {
+    try {
+      setIsSubmitting(true);
+      if (mode === 'create') {
+        await userService.create({
+          ...data,
+          password: data.password!,
+          organizationId,
+          isOnboarded: false,
+        });
+        toast({
+          title: 'Success',
+          description: 'Team member onboarded successfully',
+        });
+      } else {
+        if (!defaultValues?.id) return;
+        const updateData = { ...data };
+        if (!updateData.password) delete updateData.password;
+        
+        await userService.update(defaultValues.id, updateData);
+        toast({
+          title: 'Success',
+          description: 'Team member updated successfully',
+        });
+      }
+      onSuccess();
+      handleClose(); // Use handleClose to ensure proper cleanup
+    } catch (error) {
+      console.error('Failed to ' + (mode === 'create' ? 'onboard' : 'update') + ' team member:', error);
+      toast({
+        title: 'Error',
+        description: 'Failed to ' + (mode === 'create' ? 'onboard' : 'update') + ' team member',
+        variant: 'destructive',
+      });
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
 
   const handleFileUpload = async (event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];
@@ -195,47 +268,8 @@ export function OnboardUserModal({
     }
   };
 
-  async function onSubmit(data: FormData) {
-    try {
-      setIsSubmitting(true);
-      if (mode === 'create') {
-        await userService.create({
-          ...data,
-          password: data.password!,
-          organizationId,
-          isOnboarded: false,
-        });
-        toast({
-          title: 'Success',
-          description: 'Team member onboarded successfully',
-        });
-      } else {
-        if (!defaultValues?.id) return;
-        const updateData = { ...data };
-        if (!updateData.password) delete updateData.password;
-        
-        await userService.update(defaultValues.id, updateData);
-        toast({
-          title: 'Success',
-          description: 'Team member updated successfully',
-        });
-      }
-      onSuccess();
-      onOpenChange(false);
-    } catch (error) {
-      console.error('Failed to ' + (mode === 'create' ? 'onboard' : 'update') + ' team member:', error);
-      toast({
-        title: 'Error',
-        description: 'Failed to ' + (mode === 'create' ? 'onboard' : 'update') + ' team member',
-        variant: 'destructive',
-      });
-    } finally {
-      setIsSubmitting(false);
-    }
-  }
-
   return (
-    <Dialog open={open} onOpenChange={onOpenChange}>
+    <Dialog open={open} onOpenChange={handleClose}>
       <DialogContent className="sm:max-w-[425px]">
         <DialogHeader>
           <DialogTitle>
@@ -243,11 +277,10 @@ export function OnboardUserModal({
           </DialogTitle>
           <DialogDescription>
             Fill in the details below to {mode === 'create' ? 'onboard a new' : 'update the'} team member.
-            {mode === 'create' && ' They will receive an email to set up their account.'}
           </DialogDescription>
         </DialogHeader>
         <Form {...form}>
-          <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
+          <form onSubmit={form.handleSubmit(handleSubmit)} className="space-y-4">
             {mode === 'create' && (
               <div className="flex items-center justify-center w-full">
                 <label className="flex flex-col items-center justify-center w-full h-32 border-2 border-dashed rounded-lg cursor-pointer bg-gray-50 hover:bg-gray-100">
@@ -312,7 +345,7 @@ export function OnboardUserModal({
               name="password"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel>{mode === 'create' ? 'Password' : 'New Password (optional)'}</FormLabel>
+                  <FormLabel>{mode === 'create' ? 'Temporary Password' : 'New Password (optional)'}</FormLabel>
                   <FormControl>
                     <Input 
                       type="password" 
