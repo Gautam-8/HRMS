@@ -5,7 +5,9 @@ import { Badge } from '@/components/ui/badge';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { anomaliesService } from '@/services/anomalies.service';
 import { AnomalyType, AnomalySeverity, AnomalyStatus, Anomaly } from '@/types/anomalies';
-import { Loader2 } from 'lucide-react';
+import { Loader2, AlertTriangle } from 'lucide-react';
+import { useToast } from '@/components/ui/use-toast';
+import { useAuth } from '@/hooks/use-auth';
 
 interface ViewAnomaliesModalProps {
   isOpen: boolean;
@@ -29,22 +31,60 @@ const statusColors: Record<AnomalyStatus, string> = {
 export function ViewAnomaliesModal({ isOpen, onClose, type }: ViewAnomaliesModalProps) {
   const [anomalies, setAnomalies] = useState<Anomaly[]>([]);
   const [loading, setLoading] = useState(true);
+  const [detecting, setDetecting] = useState(false);
+  const { toast } = useToast();
+  const { user } = useAuth();
 
   useEffect(() => {
     if (isOpen) {
       fetchAnomalies();
     }
-  }, [isOpen, type]);
+  }, [isOpen, type, user?.id]);
 
   const fetchAnomalies = async () => {
     try {
       setLoading(true);
-      const response = await anomaliesService.getAnomalies({ type });
+      const response = await anomaliesService.getAnomalies({ type, userId: user?.id });
       setAnomalies(response.data);
     } catch (error) {
       console.error('Error fetching anomalies:', error);
+      toast({
+        title: 'Error',
+        description: 'Failed to fetch anomalies',
+        variant: 'destructive',
+      });
     } finally {
       setLoading(false);
+    }
+  };
+
+  const handleDetectAnomalies = async () => {
+    if (!user?.id) {
+      toast({
+        title: 'Error',
+        description: 'Please select a specific user to detect anomalies',
+        variant: 'destructive',
+      });
+      return;
+    }
+
+    try {
+      setDetecting(true);
+      await anomaliesService.detectAnomalies(user?.id);
+      toast({
+        title: 'Success',
+        description: 'Anomaly detection completed',
+      });
+      fetchAnomalies();
+    } catch (error) {
+      console.error('Error detecting anomalies:', error);
+      toast({
+        title: 'Error',
+        description: 'Failed to detect anomalies',
+        variant: 'destructive',
+      });
+    } finally {
+      setDetecting(false);
     }
   };
 
@@ -52,9 +92,30 @@ export function ViewAnomaliesModal({ isOpen, onClose, type }: ViewAnomaliesModal
     <Dialog open={isOpen} onOpenChange={onClose}>
       <DialogContent className="max-w-3xl">
         <DialogHeader>
-          <DialogTitle>
-            {type ? `${type} Anomalies` : 'All Anomalies'}
-          </DialogTitle>
+          <div className="flex items-center justify-between">
+            <DialogTitle>
+              {type ? `${type} Anomalies` : 'All Anomalies'}
+              {user?.id && ' for User'}
+            </DialogTitle>
+            <Button 
+              onClick={handleDetectAnomalies} 
+              disabled={detecting || !user?.id}
+              variant="outline"
+              className="flex items-center gap-2"
+            >
+              {detecting ? (
+                <>
+                  <Loader2 className="h-4 w-4 animate-spin" />
+                  Detecting...
+                </>
+              ) : (
+                <>
+                  <AlertTriangle className="h-4 w-4" />
+                  Detect Anomalies
+                </>
+              )}
+            </Button>
+          </div>
         </DialogHeader>
 
         <ScrollArea className="h-[60vh] pr-4">
